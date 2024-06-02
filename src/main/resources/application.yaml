@@ -1,0 +1,79 @@
+spring:
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: ${SPRING_DB_URL} # add database name to URL
+    username: ${SPRING_DB_USERNAME} # DB user
+    password: ${SPRING_DB_PASSWORD} # DB password
+    driverClassName: org.postgresql.Driver
+  sql:
+    init:
+      platform: postgres
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validateOnMigrate: false
+  servlet:
+    multipart:
+      enabled: true
+      location: ${FILE_LOCATION}
+      max-file-size: ${MAX_FILE_SIZE}
+      max-request-size: ${MAX_REQUEST_SIZE}
+  mail:
+    host: smtp.gmail.com
+    port: 587  # Email server port (e.g., 587 for TLS, 465 for SSL)
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+trainee:
+  jobs:
+    fee-schedule:
+      cron: "0 0 10 * * *" # every day at 10am
+      time-zone: "Europe/Berlin"
+    user-disable-schedule:
+      cron: "0 0 0 * * *" # every day at midnight
+      time-zone: "Europe/Berlin"
+    registration-check:
+      cron: "0 */10 * * * *" # every 10 minutes
+      time-zone: "Europe/Berlin"
+    qrcode-delete:
+      cron: "0 0 2 * * *" # every day at 2am
+      time-zone: "Europe/Berlin"
+qrcode:
+  generator:
+    location:  ${SPRING_QR_LOCATION}
+
+info:
+  version: "0.0.0.1"
+  deployed: "23.03.2024"
+  time: "19:30"
+
+
+logging:
+  level:
+    org.flywaydb: INFO
+    root: info
+
+jwt-security:
+  secret: ${JWT_SECURITY_SECRET}
+  expiration-time: ${JWT_EXPIRATION}
+
+firebase:
+  app-name: "Trainee"
+  file-name: "trainee-e4218-firebase-adminsdk-zkqvp-39d12643aa.json"
+
+server:
+  port: 8888
+  error.whitelabel.enabled: false
+  tomcat:
+    mbeanregistry:
+      enabled: true
+  forward-headers-strategy: native

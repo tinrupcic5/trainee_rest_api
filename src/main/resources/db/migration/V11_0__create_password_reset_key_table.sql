@@ -1,0 +1,9 @@
+CREATE TABLE password_reset_keys
+(
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE UNIQUE,
+    reset_key TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiration TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '10 minutes',
+    is_used BOOLEAN DEFAULT FALSE
+);
