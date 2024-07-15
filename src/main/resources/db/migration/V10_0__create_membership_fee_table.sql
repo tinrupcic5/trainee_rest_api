@@ -20,5 +20,3 @@ CREATE TABLE membership_fee
     email_sent_date          TIMESTAMP NULL
 );
 
-INSERT INTO membership_fee_amount (school_details_id, amount, currency)
-VALUES (1, 40, 'euro');

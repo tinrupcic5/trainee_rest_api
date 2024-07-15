@@ -6,14 +6,3 @@ CREATE TABLE training_level_classification_system
 );
 
 
-INSERT INTO training_level_classification_system (training_level_classification)
-VALUES ('ADULTS');
-INSERT INTO training_level_classification_system (training_level_classification)
-VALUES ('BEGINNERS');
-INSERT INTO training_level_classification_system (training_level_classification)
-VALUES ('KIDS');
-INSERT INTO training_level_classification_system (training_level_classification)
-VALUES ('ALL');
-
-
-
