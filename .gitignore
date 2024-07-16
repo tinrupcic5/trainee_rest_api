@@ -1,8 +1,10 @@
 # Ignore all .json files
 *.json
 
-# Ignore specific sql_updates.txt file
+
+resources/
 sql_updates.txt
+trainee-e4218-firebase-adminsdk-zkqvp-39d12643aa.json
 
 # Ignore Maven's standard files
 target/
