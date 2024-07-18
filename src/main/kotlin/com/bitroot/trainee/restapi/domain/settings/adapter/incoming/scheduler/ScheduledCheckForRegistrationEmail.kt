@@ -19,6 +19,7 @@ class ScheduledCheckForRegistrationEmail(
     )
     fun checkForRegistrationEmail() {
         LoggingContext.put(LoggingContext.UseCase.CHECK_FOR_REGISTRATION_EMAIL)
+        logger.info(LoggingContext.UseCase.CHECK_FOR_REGISTRATION_EMAIL.name)
         settingsService.getAllSettingsWhereRegistrationEmailWasNotSent()
         logger.info("Check for registration email Time: @${Time.valueOf(LocalTime.now())}")
     }
