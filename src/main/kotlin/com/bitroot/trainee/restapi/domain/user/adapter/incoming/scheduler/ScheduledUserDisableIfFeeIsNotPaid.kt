@@ -12,6 +12,8 @@ class ScheduledUserDisableIfFeeIsNotPaid(
 ) {
     @Scheduled(cron = "\${trainee.jobs.user-disable-schedule.cron}", zone = "\${trainee.jobs.user-disable-schedule.time-zone}")
     fun membershipCheckForUnpaidFeeOverMonthAndTenDays() {
+        LoggingContext.put(LoggingContext.UseCase.MEMBERSHIP_CHECK_FOR_UNPAID_FEE_OVER_MONTH_AND_TEN_DAYS)
+
         val membershipFeeUsers = membershipFeeService.membershipCheckForUnpaidFeeOverMonthAndTenDays()
 
         membershipFeeUsers.forEach {

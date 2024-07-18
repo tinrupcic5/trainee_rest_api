@@ -43,6 +43,7 @@ trainee:
       time-zone: "Europe/Berlin"
     registration-check:
       cron: "0 */10 * * * *" # every 10 minutes
+#      cron: "* * * * * *" # every second test
       time-zone: "Europe/Berlin"
     qrcode-delete:
       cron: "0 0 2 * * *" # every day at 2am

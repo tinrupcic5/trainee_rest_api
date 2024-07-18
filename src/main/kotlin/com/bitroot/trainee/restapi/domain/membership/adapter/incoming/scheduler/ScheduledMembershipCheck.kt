@@ -9,6 +9,9 @@ class ScheduledMembershipCheck(
     val membershipFeeService: MembershipFeeService,
 ) {
     @Scheduled(cron = "\${trainee.jobs.fee-schedule.cron}", zone = "\${trainee.jobs.fee-schedule.time-zone}")
-    fun membershipCheck() =
+    fun membershipCheck() {
+        LoggingContext.put(LoggingContext.UseCase.MEMBERSHIP_CHECK)
         membershipFeeService.membershipCheck()
+
+    }
 }

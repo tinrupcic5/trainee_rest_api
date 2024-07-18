@@ -22,7 +22,8 @@ class ScheduledDeleteQrCode(
         cron = "\${trainee.jobs.qrcode-delete.cron}",
         zone = "\${trainee.jobs.qrcode-delete.time-zone}",
     )
-    fun checkForRegistrationEmail() {
+    fun deleteOldQrCodes() {
+        LoggingContext.put(LoggingContext.UseCase.CHECK_FOR_REGISTRATION_EMAIL)
         val userList = userService.getAllUsers()
         userList?.forEach {
             val userDetails = userDetailsRepository.getUserDetailsByUserId(it.id!!)

@@ -18,6 +18,7 @@ class ScheduledCheckForRegistrationEmail(
         zone = "\${trainee.jobs.registration-check.time-zone}",
     )
     fun checkForRegistrationEmail() {
+        LoggingContext.put(LoggingContext.UseCase.CHECK_FOR_REGISTRATION_EMAIL)
         settingsService.getAllSettingsWhereRegistrationEmailWasNotSent()
         logger.info("Check for registration email Time: @${Time.valueOf(LocalTime.now())}")
     }
