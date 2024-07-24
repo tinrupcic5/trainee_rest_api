@@ -12,4 +12,5 @@ data class FileDetailsDto(
     val createdAt: LocalDateTime,
     val fileType: String,
     val originalFileNameWithExtension: String? = null,
+    val comment: String? = null,
 )

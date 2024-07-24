@@ -10,6 +10,7 @@ import com.bitroot.trainee.restapi.domain.user.adapter.outgoing.web.UserLoginTok
 import com.bitroot.trainee.restapi.domain.user.common.interfaces.UserId
 import com.bitroot.trainee.restapi.security.jwt.JwtService
 import mu.KotlinLogging
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -32,16 +33,23 @@ class UserController(
     private val logger = KotlinLogging.logger { }
 
     @PostMapping("/login")
-    fun login(@RequestBody user: UserLogin): ResponseEntity<UserLoginTokenDto> {
+    fun login(
+        @RequestBody user: UserLogin,
+    ): ResponseEntity<UserLoginTokenDto> {
         val usr = userService.login(user.userName, user.password)
 
         logger.info("${usr.get().name} ${usr.get().lastName} is trying to log in.")
         return if (usr.isPresent) {
-            if (usr.get().user.role.name.uppercase() == Roles.SCANNER.name.uppercase()) {
+            if (usr
+                    .get()
+                    .user.role.name
+                    .uppercase() == Roles.SCANNER.name.uppercase()
+            ) {
                 ResponseEntity.ok(
                     UserLoginTokenDto(
                         usr.get(),
                         jwtService.create(usr.get().id),
+                        refreshToken = jwtService.createRefreshToken(usr.get().id!!),
                     ),
                 )
             } else {
@@ -50,6 +58,7 @@ class UserController(
                         usr.get(),
                         jwtService.create(usr.get().id),
                         qrCodeService.getQrCodeForUser(UserId(usr.get().user.id!!)).qrCode!!.value,
+                        refreshToken = jwtService.createRefreshToken(usr.get().id!!),
                     ),
                 )
             }
@@ -64,7 +73,9 @@ class UserController(
     }
 
     @GetMapping("/logout")
-    fun logout(@RequestHeader("Authorization") authorizationHeader: String): ResponseEntity<MessageBody> {
+    fun logout(
+        @RequestHeader(HttpHeaders.AUTHORIZATION) authorizationHeader: String,
+    ): ResponseEntity<MessageBody> {
         val token = jwtService.getJwtFromHeader(authorizationHeader)
 
         jwtService.isTokenInvalid(token)
@@ -74,20 +85,29 @@ class UserController(
     }
 
     @PutMapping("/enable/{userId}/{isEnabled}")
-    fun setUserEnableStatus(@PathVariable userId: Long, @PathVariable isEnabled: Boolean): ResponseEntity<MessageBody> =
+    fun setUserEnableStatus(
+        @PathVariable userId: Long,
+        @PathVariable isEnabled: Boolean,
+    ): ResponseEntity<MessageBody> =
         ResponseEntity.status(HttpStatus.OK).body(userService.setUserEnableStatus(userId, isEnabled).toMessageBody())
 
     @DeleteMapping("/{userId}")
-    fun deleteUser(@PathVariable userId: Long): ResponseEntity<MessageBody> =
-        ResponseEntity.status(HttpStatus.OK).body(userService.deleteUser(userId).toMessageBody())
+    fun deleteUser(
+        @PathVariable userId: Long,
+    ): ResponseEntity<MessageBody> = ResponseEntity.status(HttpStatus.OK).body(userService.deleteUser(userId).toMessageBody())
 
     @PutMapping("/password")
-    fun changePassword(@RequestBody userChangePasswordRequest: UserChangePasswordRequest): ResponseEntity<MessageBody> {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.changePassword(userChangePasswordRequest).toMessageBody())
-    }
+    fun changePassword(
+        @RequestBody userChangePasswordRequest: UserChangePasswordRequest,
+    ): ResponseEntity<MessageBody> =
+        ResponseEntity
+            .status(HttpStatus.OK)
+            .body(userService.changePassword(userChangePasswordRequest).toMessageBody())
 
     @PostMapping("/guest/{language}")
-    fun saveGuest(@PathVariable language: String): ResponseEntity<UserLoginTokenDto> {
+    fun saveGuest(
+        @PathVariable language: String,
+    ): ResponseEntity<UserLoginTokenDto> {
         val guestUser = userService.saveGuest(language)
 
         val usr = userService.login(guestUser.user.userName, guestUser.user.userName)
@@ -105,10 +125,37 @@ class UserController(
     }
 
     @PostMapping
-    fun registerUser(@RequestBody user: UserRegisterRequest): ResponseEntity<MessageBody> =
-        ResponseEntity.status(HttpStatus.OK).body(MessageBody(userService.register(user)))
+    fun registerUser(
+        @RequestBody user: UserRegisterRequest,
+    ): ResponseEntity<MessageBody> = ResponseEntity.status(HttpStatus.OK).body(MessageBody(userService.register(user)))
 
     @PutMapping
-    fun updateUser(@RequestBody user: UserRegisterRequest): ResponseEntity<MessageBody> =
-        ResponseEntity.status(HttpStatus.OK).body(MessageBody(userService.register(user)))
+    fun updateUser(
+        @RequestBody user: UserRegisterRequest,
+    ): ResponseEntity<MessageBody> = ResponseEntity.status(HttpStatus.OK).body(MessageBody(userService.register(user)))
+
+    @PostMapping("/refresh-token")
+    fun refreshToken(
+        @RequestBody refreshTokenRequest: RefreshTokenRequest,
+    ): ResponseEntity<RefreshTokenResponse> {
+        val userId = jwtService.validateRefreshToken(refreshTokenRequest.refreshToken)
+        val newAccessToken = jwtService.create(userId)
+        val newRefreshToken = jwtService.createRefreshToken(userId)
+
+        return ResponseEntity.ok(
+            RefreshTokenResponse(
+                accessToken = newAccessToken,
+                refreshToken = newRefreshToken,
+            ),
+        )
+    }
 }
+
+data class RefreshTokenRequest(
+    val refreshToken: String,
+)
+
+data class RefreshTokenResponse(
+    val accessToken: String,
+    val refreshToken: String,
+)

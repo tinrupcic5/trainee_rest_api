@@ -24,8 +24,7 @@ internal class NotificationRepositoryImpl(
             val stack = notificationEntityJpaRepository.getReferenceById(notificationRequest.id.value)
             notificationEntityJpaRepository.save(
                 stack.copy(
-                    messageEn = notificationRequest.messageEn.value,
-                    messageHr = notificationRequest.messageHr.value,
+                    message = notificationRequest.message.value,
                     schoolDetails = notificationRequest.schoolDetails.domainToEntity(),
                 ),
             )

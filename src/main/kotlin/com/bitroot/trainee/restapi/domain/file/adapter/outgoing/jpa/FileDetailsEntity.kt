@@ -1,5 +1,6 @@
 package com.bitroot.trainee.restapi.domain.file.adapter.outgoing.jpa
 
+import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileComment
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetails
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsId
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsName
@@ -40,6 +41,9 @@ data class FileDetailsEntity(
 
     @Column(name = "created_at")
     val createdAt: LocalDateTime,
+
+    @Column(name = "comment",nullable = false)
+    val comment: String,
 )
 
 fun FileDetailsEntity.toDomain(): FileDetails =
@@ -50,4 +54,5 @@ fun FileDetailsEntity.toDomain(): FileDetails =
         fileViewStatus = FileViewStatus.valueOf(this.fileViewStatus),
         createdAt = this.createdAt,
         fileType = FileDetailsType(this.fileType),
+        comment = FileComment(this.comment),
     )

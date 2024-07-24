@@ -7,7 +7,6 @@ data class NotificationDto(
     val id: Long,
     val schoolDetailsDto: SchoolDetailsDto,
     val userDto: UserDto,
-    val messageEn: String,
-    val messageHr: String,
+    val message: String,
     val createdAt: String,
 )

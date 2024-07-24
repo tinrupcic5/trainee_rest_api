@@ -16,6 +16,7 @@ class AppSettings {
         const val UTF_8: String = "UTF-8"
         const val VIDEO: String = "VIDEO"
         const val IMAGE: String = "IMAGE"
+        const val NOTIFICATION: String = "NOTIFICATION"
         const val EMAIL_REGISTRATION_SUBJECT_HR: String = "Dobrodošli u Trainee!"
         const val EMAIL_REGISTRATION_SUBJECT_EN: String = "Welcome to Trainee!"
         const val HEADERS_NAME: String = "Content-Disposition"

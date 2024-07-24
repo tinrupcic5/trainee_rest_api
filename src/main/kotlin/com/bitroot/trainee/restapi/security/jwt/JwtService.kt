@@ -23,6 +23,8 @@ class JwtService(
 
     @Value("\${jwt-security.secret}")
     private val secret: String = ""
+    @Value("\${jwt-security.refresh-expiration-time}")
+    val refreshExpiration: Int = 86400 // 24 hours
 
     lateinit var secretKey: SecretKey
 
@@ -52,6 +54,42 @@ class JwtService(
     }
     fun invalidateToken(token: String) {
         invalidatedTokens.add(token)
+    }
+
+    fun createRefreshToken(userId: Long): String {
+        val userResult = userService.getUserById(userId)
+        if (!userResult.isEnabled) {
+            throw UserDisabledException("User is disabled")
+        }
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.SECOND, refreshExpiration)
+
+        return Jwts.builder()
+            .setSubject(userId.toString())
+            .setIssuedAt(Date())
+            .setExpiration(calendar.time)
+            .setNotBefore(Date())
+            .signWith(secretKey)
+            .compact()
+    }
+
+    fun validateRefreshToken(token: String): Long {
+        try {
+            val claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .body
+
+            val userId = claims.subject.toLong()
+
+            if (isTokenInvalid(token)) {
+                throw MalformedJwtException("Token is invalidated")
+            }
+            return userId
+        } catch (e: Exception) {
+            throw MalformedJwtException("Invalid refresh token")
+        }
     }
 
     fun isTokenInvalid(token: String): Boolean {

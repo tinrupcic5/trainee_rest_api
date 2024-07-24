@@ -8,4 +8,5 @@ data class UserLoginTokenDto(
     val userDetails: UserDetailsDto,
     val token: String,
     val qrData: String? = null,
+    val refreshToken: String? = null,
 )

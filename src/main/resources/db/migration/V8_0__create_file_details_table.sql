@@ -6,5 +6,6 @@ CREATE TABLE file_details
     file_view_status TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     file_type TEXT NOT NULL, --- video or image
+    comment TEXT NULL,
     UNIQUE (name, section_id)
 );

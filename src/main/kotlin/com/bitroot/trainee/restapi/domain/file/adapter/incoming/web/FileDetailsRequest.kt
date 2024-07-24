@@ -12,4 +12,5 @@ data class FileDetailsRequest(
     val fileViewStatus: FileViewStatus,
     val createdAt: LocalDateTime,
     val fileType: String,
+    val comment: String,
 )

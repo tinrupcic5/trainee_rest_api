@@ -8,6 +8,7 @@ import com.bitroot.trainee.restapi.domain.training.details.calendar.common.inter
 import com.bitroot.trainee.restapi.domain.training.details.calendar.common.interfaces.TrainingCalendarId
 import com.bitroot.trainee.restapi.domain.training.details.calendar.common.interfaces.TrainingStatus
 import com.bitroot.trainee.restapi.domain.user.MessageBody
+import com.bitroot.trainee.restapi.domain.user.common.interfaces.UserId
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,15 +24,16 @@ class TrainingCalendarController(
     val trainingService: TrainingCalendarService,
 ) {
 
-    @PutMapping("{trainingCalendarId}/{trainingStatus}")
+    @PutMapping("{trainingCalendarId}/{trainingStatus}/{userId}")
     fun updateTrainingCalendar(
         @PathVariable trainingCalendarId: Long,
-        @PathVariable trainingStatus: Boolean
+        @PathVariable trainingStatus: Boolean,
+        @PathVariable userId: Long
     ): ResponseEntity<MessageBody> =
         ResponseEntity.status(HttpStatus.OK)
             .body(
                 trainingService.updateTraining(
-                    TrainingCalendarId(trainingCalendarId), TrainingStatus(trainingStatus)
+                    TrainingCalendarId(trainingCalendarId), TrainingStatus(trainingStatus), UserId(userId)
                 ).toMessageBody()
             )
 

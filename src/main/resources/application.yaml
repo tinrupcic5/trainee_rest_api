@@ -66,6 +66,7 @@ logging:
 jwt-security:
   secret: ${JWT_SECURITY_SECRET}
   expiration-time: ${JWT_EXPIRATION}
+  refresh-expiration-time: ${JWT_REFRESH_EXPIRATION}
 
 firebase:
   app-name: "Trainee"

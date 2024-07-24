@@ -14,8 +14,7 @@ data class Notification(
     val id: NotificationId,
     val schoolDetails: SchoolDetails,
     val user: User,
-    val messageEn: NotificationMessageEn,
-    val messageHr: NotificationMessageHr,
+    val message: NotificationMessage,
     val createdAt: LocalDateTime,
 )
 fun Notification.toDto(): NotificationDto =
@@ -23,8 +22,7 @@ fun Notification.toDto(): NotificationDto =
         id = this.id.value!!,
         schoolDetailsDto = this.schoolDetails.domainToDto(),
         userDto = this.user.domainToDto(),
-        messageEn = this.messageEn.value,
-        messageHr = this.messageHr.value,
+        message = this.message.value,
         createdAt = this.createdAt.toString(),
     )
 fun Notification.toEntity(): NotificationEntity =
@@ -32,7 +30,6 @@ fun Notification.toEntity(): NotificationEntity =
         id = this.id.value,
         schoolDetails = this.schoolDetails.domainToEntity(),
         user = this.user.domainToEntity(),
-        messageEn = this.messageEn.value,
-        messageHr = this.messageHr.value,
+        message = this.message.value,
         createdAt = this.createdAt,
     )

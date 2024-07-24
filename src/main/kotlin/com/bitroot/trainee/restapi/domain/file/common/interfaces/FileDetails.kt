@@ -15,6 +15,7 @@ data class FileDetails(
     val fileViewStatus: FileViewStatus,
     val createdAt: LocalDateTime,
     val fileType: FileDetailsType,
+    val comment: FileComment,
 )
 
 fun FileDetails.toDto(originalFileNameWithExtension: String? = null): FileDetailsDto =
@@ -25,7 +26,8 @@ fun FileDetails.toDto(originalFileNameWithExtension: String? = null): FileDetail
         fileViewStatus = this.fileViewStatus,
         createdAt = this.createdAt,
         fileType = this.fileType.value,
-        originalFileNameWithExtension = originalFileNameWithExtension
+        originalFileNameWithExtension = originalFileNameWithExtension,
+        comment = this.comment.value,
     )
 
 fun FileDetails.toEntity(): FileDetailsEntity =
@@ -36,19 +38,5 @@ fun FileDetails.toEntity(): FileDetailsEntity =
         fileViewStatus = this.fileViewStatus.name,
         createdAt = this.createdAt,
         fileType = this.fileType.value,
+        comment = this.comment.value,
     )
-
-fun ResponseEntity<Set<FileDetails>>.responseDomainToSetDto(): ResponseEntity<Set<FileDetailsDto>> {
-    val fileDtoSet = body?.map { filedetails ->
-        FileDetailsDto(
-            id = filedetails.id?.value,
-            name = filedetails.name.value,
-            section = filedetails.section.toDto(),
-            fileViewStatus = filedetails.fileViewStatus,
-            createdAt = filedetails.createdAt,
-            fileType = filedetails.fileType.value,
-        )
-    }?.toSet()
-
-    return ResponseEntity(fileDtoSet, this.statusCode)
-}

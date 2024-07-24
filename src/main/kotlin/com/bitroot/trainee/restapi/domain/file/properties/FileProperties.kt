@@ -4,6 +4,7 @@ import com.bitroot.trainee.restapi.appsettings.AppSettings
 import com.bitroot.trainee.restapi.appsettings.isVideo
 import com.bitroot.trainee.restapi.domain.file.adapter.outgoing.web.ResourceDto
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetails
+import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileUriResponse
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.toDto
 import com.bitroot.trainee.restapi.domain.file.details.section.common.interfaces.toDto
 import com.google.api.ResourceProto.resource
@@ -172,25 +173,36 @@ class FileProperties(
             return "Failed to delete file(s): ${e.message}"
         }
     }
-    fun streamFile(fileDetails: FileDetails): ResponseEntity<Resource> {
-        val baseFilePath = if (fileDetails.fileType.value == AppSettings.VIDEO) {
-            "$filePath${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$filePathToVideo"
-        } else {
-            "$filePath${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$filePathToPictures"
-        }
+    fun streamFile(fileDetailsList: List<FileDetails>): List<FileUriResponse> {
+        val filePathToVideo = filePathToVideo
+        val filePathToPictures = filePathToPictures
+        val basePath = filePath
+        var type = AppSettings.VIDEO
 
-        val directory = Paths.get(baseFilePath).toFile()
-        val foundFile = directory.listFiles()?.find { it.name.startsWith(fileDetails.name.value) }
-
-        return if (foundFile != null && foundFile.exists()) {
-            val resource = InputStreamResource(FileInputStream(foundFile))
-            val headers = HttpHeaders().apply {
-                contentType = if (fileDetails.fileType.value == AppSettings.VIDEO) MediaType.valueOf("video/mp4") else MediaType.valueOf("image/jpeg")
-                contentLength = foundFile.length()
+        return fileDetailsList.mapNotNull { fileDetails ->
+            val fileTypePath = if (fileDetails.fileType.value == AppSettings.VIDEO) {
+                type = AppSettings.VIDEO
+                filePathToVideo
+            } else {
+                type = AppSettings.IMAGE
+                filePathToPictures
             }
-            ResponseEntity.ok().headers(headers).body(resource)
-        } else {
-            ResponseEntity.notFound().build()
+
+            val baseFilePath = "${basePath}${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}${fileTypePath}"
+
+            val directory = Paths.get(baseFilePath).toFile()
+
+            val foundFile = directory.listFiles()?.find { it.name.startsWith(fileDetails.name.value) }
+
+            val uri = "http://localhost:8888/" + foundFile?.takeIf { it.exists() }?.absolutePath
+
+            FileUriResponse(
+                type = type,
+                contentUrl = uri,
+                contentComment = fileDetails.comment.value,
+                createdAt = fileDetails.createdAt
+
+            )
         }
     }
     fun downloadFiles(names: List<FileDetails>): Set<ResourceDto> {
