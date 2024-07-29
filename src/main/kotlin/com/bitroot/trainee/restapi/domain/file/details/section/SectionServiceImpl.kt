@@ -18,16 +18,17 @@ class SectionServiceImpl(
 ) : SectionService {
     override fun save(sectionRequest: SectionRequest): String =
         sectionRepository.save(
-            section = Section(
-                id = SectionId(sectionRequest.id),
-                name = SectionName(sectionRequest.name),
-                userDetails = sectionRequest.userDetails.requestToDomain(),
-            ),
+            section =
+                Section(
+                    id = SectionId(sectionRequest.id),
+                    name = SectionName(sectionRequest.name),
+                    userDetails = sectionRequest.userDetails.requestToDomain(),
+                ),
         )
 
     override fun delete(sectionId: Long): String {
         val section = sectionRepository.getSectionById(sectionId)
-        sectionRepository.delete(section)
+        sectionRepository.delete(section!!)
         fileProperties.deleteFolder(
             schoolName = section.userDetails.schoolDetails.school.schoolName.value,
             sectionName = section.name.value,
@@ -35,6 +36,9 @@ class SectionServiceImpl(
         return "Section deleted"
     }
 
-    override fun renameSection(sectionId: Long, oldSectionName: String, newSectionName: String): String =
-        sectionRepository.renameSection(sectionId, oldSectionName, newSectionName)
+    override fun renameSection(
+        sectionId: Long,
+        oldSectionName: String,
+        newSectionName: String,
+    ): String = sectionRepository.renameSection(sectionId, oldSectionName, newSectionName)
 }

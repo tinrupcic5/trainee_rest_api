@@ -8,6 +8,8 @@ data class FileDetailsDto(
     val id: Long? = null,
     val name: String,
     val section: SectionDto,
+    val classPath: String,
+    val suffix: String,
     val fileViewStatus: FileViewStatus,
     val createdAt: LocalDateTime,
     val fileType: String,

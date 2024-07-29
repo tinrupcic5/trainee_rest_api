@@ -2,8 +2,10 @@ package com.bitroot.trainee.restapi.domain.file.adapter.outgoing.jpa
 
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileComment
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetails
+import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsClassPath
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsId
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsName
+import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsNameSuffix
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsType
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileViewStatus
 import com.bitroot.trainee.restapi.domain.file.details.section.adapter.outgoing.jpa.SectionEntity
@@ -25,24 +27,22 @@ data class FileDetailsEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-
     @Column(name = "name", nullable = false, unique = true)
     val name: String,
-
+    @Column(name = "suffix", nullable = false)
+    val suffix: String,
+    @Column(name = "class_path", nullable = false)
+    val classPath: String,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id", referencedColumnName = "id", nullable = false)
     val section: SectionEntity,
-
     @Column(name = "file_view_status", nullable = false)
     val fileViewStatus: String,
-
     @Column(name = "file_type", nullable = false)
     val fileType: String,
-
     @Column(name = "created_at")
     val createdAt: LocalDateTime,
-
-    @Column(name = "comment",nullable = false)
+    @Column(name = "comment", nullable = false)
     val comment: String,
 )
 
@@ -51,6 +51,8 @@ fun FileDetailsEntity.toDomain(): FileDetails =
         id = FileDetailsId(this.id),
         name = FileDetailsName(this.name),
         section = this.section.toDomain(),
+        classPath = FileDetailsClassPath(this.classPath),
+        suffix = FileDetailsNameSuffix(this.suffix),
         fileViewStatus = FileViewStatus.valueOf(this.fileViewStatus),
         createdAt = this.createdAt,
         fileType = FileDetailsType(this.fileType),

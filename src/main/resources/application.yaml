@@ -54,6 +54,7 @@ qrcode:
 
 info:
   version: "0.0.0.1"
+  name: "bitroot [ground studio]"
   deployed: "23.03.2024"
   time: "19:30"
 

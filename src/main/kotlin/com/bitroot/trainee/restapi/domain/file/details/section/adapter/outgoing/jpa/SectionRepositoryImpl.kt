@@ -21,16 +21,21 @@ internal class SectionRepositoryImpl(
         return "Section deleted"
     }
 
-    override fun getSectionByName(sectionName: String, sectionId: Long): Section =
-        sectionEntityJpaRepository.getSectionByName(sectionName, sectionId).toDomain()
+    override fun getSectionByName(
+        sectionName: String,
+        sectionId: Long,
+    ): Section = sectionEntityJpaRepository.getSectionByName(sectionName, sectionId).toDomain()
 
-    override fun getSectionById(sectionId: Long): Section =
-        sectionEntityJpaRepository.getSectionById(sectionId).toDomain()
+    override fun getSectionById(sectionId: Long): Section? = sectionEntityJpaRepository.getSectionById(sectionId)?.toDomain()
 
     override fun getAllSections(userId: Long): Set<Section> =
         sectionEntityJpaRepository.getAllSections(userId).map { it.toDomain() }.toSet()
 
-    override fun renameSection(sectionId: Long, oldSectionName: String, newSectionName: String): String {
+    override fun renameSection(
+        sectionId: Long,
+        oldSectionName: String,
+        newSectionName: String,
+    ): String {
         val oldSection = getSectionByName(oldSectionName, sectionId)
         save(oldSection.copy(name = SectionName(newSectionName)))
 

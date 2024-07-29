@@ -7,10 +7,9 @@ import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetails
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileUriResponse
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.toDto
 import com.bitroot.trainee.restapi.domain.file.details.section.common.interfaces.toDto
-import com.google.api.ResourceProto.resource
 import mu.KotlinLogging
+import org.apache.commons.lang3.StringUtils.substringAfterLast
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
 import org.springframework.http.ContentDisposition
@@ -18,11 +17,9 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
-import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
-import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -47,15 +44,18 @@ class FileProperties(
         val resource: Resource = UrlResource(filePath.toUri())
 
         if (resource.exists()) {
-            val contentDisposition: ContentDisposition = ContentDisposition.builder("attachment")
-                .filename(resource.filename)
-                .build()
+            val contentDisposition: ContentDisposition =
+                ContentDisposition
+                    .builder("attachment")
+                    .filename(resource.filename)
+                    .build()
 
             val headers = HttpHeaders()
             headers.contentType = MediaType.APPLICATION_OCTET_STREAM
             headers.contentDisposition = contentDisposition
 
-            return ResponseEntity.ok()
+            return ResponseEntity
+                .ok()
                 .headers(headers)
                 .body(resource)
         } else {
@@ -63,27 +63,43 @@ class FileProperties(
         }
     }
 
-    fun uploadFile(schoolName: String, sectionName: String, file: MultipartFile): String {
+    fun uploadFile(
+        schoolName: String,
+        sectionName: String,
+        file: MultipartFile,
+        newFileName: String,
+    ): String {
         if (file.isEmpty) {
             logger.info("File is empty")
             return "File is empty"
         }
 
-        val baseFilePath = if (isVideo(file)) {
-            "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToVideo"
-        } else {
-            "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToPictures"
-        }
+        val baseFilePath =
+            if (isVideo(file)) {
+                "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToVideo"
+            } else {
+                "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToPictures"
+            }
 
         val uploadDirectory: Path = Paths.get(baseFilePath)
-
         createFolderIfNotExists(baseFilePath)
 
-        val targetLocation: Path = uploadDirectory.resolve(file.originalFilename)
+        val suffix = file.originalFilename?.substringAfterLast('.') ?: throw IllegalArgumentException("Filename is missing extension")
+        val targetLocation: Path = uploadDirectory.resolve("$newFileName.$suffix")
 
-        println("Save Location: $baseFilePath")
-        file.transferTo(targetLocation)
-        return "File uploaded successfully"
+        println("Save Location: $targetLocation")
+
+        file.inputStream.use { inputStream ->
+            Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING)
+        }
+
+        if (Files.exists(targetLocation)) {
+            println("File successfully saved.")
+        } else {
+            println("File not found after saving.")
+        }
+
+        return targetLocation.toString().substringAfterLast("/resources/")
     }
 
     fun createFolderIfNotExists(folderPath: String) {
@@ -97,13 +113,20 @@ class FileProperties(
         }
     }
 
-    fun renameFile(schoolName: String, sectionName: String, oldFileName: String, newFileName: String): String {
+    fun renameFile(
+        schoolName: String,
+        sectionName: String,
+        oldFileName: String,
+        newFileName: String,
+    ): String {
         val directoryPath: Path =
             Paths.get("$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToVideo")
-        val matchingFiles = Files.list(directoryPath)
-            .filter { Files.isRegularFile(it) }
-            .filter { it.fileName.toString().startsWith(oldFileName) }
-            .collect(Collectors.toList())
+        val matchingFiles =
+            Files
+                .list(directoryPath)
+                .filter { Files.isRegularFile(it) }
+                .filter { it.fileName.toString().startsWith(oldFileName) }
+                .collect(Collectors.toList())
 
         if (matchingFiles.isEmpty()) {
             logger.info("No files found with the specified oldFileName")
@@ -125,13 +148,17 @@ class FileProperties(
         }
     }
 
-    fun deleteFolder(schoolName: String, sectionName: String) {
+    fun deleteFolder(
+        schoolName: String,
+        sectionName: String,
+    ) {
         val baseFilePath = "$filePath$schoolName${File.separator}$sectionName"
 
         val directoryPath: Path = Paths.get(baseFilePath)
 
         try {
-            Files.walk(directoryPath)
+            Files
+                .walk(directoryPath)
                 .sorted(Comparator.reverseOrder())
                 .map(Path::toFile)
                 .forEach(File::delete)
@@ -141,24 +168,33 @@ class FileProperties(
         }
     }
 
-    fun deleteFile(schoolName: String, sectionName: String, videoNameToDelete: String, fileType: String): String {
-        val baseFilePath = if (fileType == AppSettings.VIDEO) {
-            "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToVideo"
-        } else {
-            "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToPictures"
-        }
+    fun deleteFile(
+        schoolName: String,
+        sectionName: String,
+        videoNameToDelete: String,
+        fileType: String,
+    ): String {
+        val baseFilePath =
+            if (fileType == AppSettings.VIDEO) {
+                "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToVideo"
+            } else {
+                "$filePath$schoolName${File.separator}$sectionName${File.separator}$filePathToPictures"
+            }
 
         val directoryPath: Path =
             Paths.get(baseFilePath)
 
-        val allFiles = Files.list(directoryPath)
-            .filter { Files.isRegularFile(it) }
-            .collect(Collectors.toList())
+        val allFiles =
+            Files
+                .list(directoryPath)
+                .filter { Files.isRegularFile(it) }
+                .collect(Collectors.toList())
 
-        val matchingFiles = allFiles.filter { file ->
-            val fileNameWithoutExtension = StringUtils.stripFilenameExtension(file.fileName.toString())
-            videoNameToDelete == fileNameWithoutExtension
-        }
+        val matchingFiles =
+            allFiles.filter { file ->
+                val fileNameWithoutExtension = StringUtils.stripFilenameExtension(file.fileName.toString())
+                videoNameToDelete == fileNameWithoutExtension
+            }
 
         if (matchingFiles.isEmpty()) {
             return "File not found: $videoNameToDelete"
@@ -173,6 +209,7 @@ class FileProperties(
             return "Failed to delete file(s): ${e.message}"
         }
     }
+
     fun streamFile(fileDetailsList: List<FileDetails>): List<FileUriResponse> {
         val filePathToVideo = filePathToVideo
         val filePathToPictures = filePathToPictures
@@ -180,40 +217,50 @@ class FileProperties(
         var type = AppSettings.VIDEO
 
         return fileDetailsList.mapNotNull { fileDetails ->
-            val fileTypePath = if (fileDetails.fileType.value == AppSettings.VIDEO) {
-                type = AppSettings.VIDEO
-                filePathToVideo
-            } else {
-                type = AppSettings.IMAGE
-                filePathToPictures
-            }
+            val fileTypePath =
+                if (fileDetails.fileType.value == AppSettings.VIDEO) {
+                    type = AppSettings.VIDEO
+                    filePathToVideo
+                } else {
+                    type = AppSettings.IMAGE
+                    filePathToPictures
+                }
 
-            val baseFilePath = "${basePath}${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}${fileTypePath}"
+            val baseFilePath = "${basePath}${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$fileTypePath"
 
             val directory = Paths.get(baseFilePath).toFile()
 
             val foundFile = directory.listFiles()?.find { it.name.startsWith(fileDetails.name.value) }
 
-            val uri = "http://localhost:8888/" + foundFile?.takeIf { it.exists() }?.absolutePath
-
+//            val uri = foundFile?.takeIf { it.exists() }?.absolutePath
+            val prefix = "src/main/resources/"
             FileUriResponse(
                 type = type,
-                contentUrl = uri,
+                classPath = baseFilePath.removePrefix(prefix),
+                name = extractFilename(foundFile.toString()),
+                uri = "http://192.168.1.114:8888/api/filedetails/content/${extractFilename(foundFile.toString())}",
                 contentComment = fileDetails.comment.value,
-                createdAt = fileDetails.createdAt
-
+                suffix = fileDetails.suffix.value,
+                createdAt = fileDetails.createdAt,
             )
         }
     }
+
+    fun extractFilename(filePath: String?): String {
+        val path = Paths.get(filePath)
+        return path.fileName.toString()
+    }
+
     fun downloadFiles(names: List<FileDetails>): Set<ResourceDto> {
         val downloadedResources: MutableSet<ResourceDto> = HashSet()
 
         names.forEach { fileDetails ->
-            val baseFilePath = if (fileDetails.fileType.value == AppSettings.VIDEO) {
-                "$filePath${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$filePathToVideo"
-            } else {
-                "$filePath${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$filePathToPictures"
-            }
+            val baseFilePath =
+                if (fileDetails.fileType.value == AppSettings.VIDEO) {
+                    "$filePath${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$filePathToVideo"
+                } else {
+                    "$filePath${fileDetails.section.userDetails.schoolDetails.school.schoolName.value}${File.separator}${fileDetails.section.name.value}${File.separator}$filePathToPictures"
+                }
 
             try {
                 val filesInFolder = Paths.get(baseFilePath).toFile().list()
@@ -242,5 +289,4 @@ class FileProperties(
 
         return downloadedResources
     }
-
 }

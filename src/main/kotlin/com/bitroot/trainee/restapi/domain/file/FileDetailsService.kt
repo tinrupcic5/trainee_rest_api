@@ -9,12 +9,28 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.multipart.MultipartFile
 
 interface FileDetailsService {
-
     fun save(fileDetailsRequest: FileDetailsRequest): String
+
     fun delete(fileDetailsId: Long): String
-    fun streamFile(userId: Long): List<FileUriResponse>
+
+    fun streamFileAndGetNotifications(userId: Long): List<FileUriResponse>
+
     fun getAllSections(userId: Long): ResponseEntity<Set<ResourceDto>>
+
     fun downloadFile(fileName: String): ResponseEntity<Resource>
-    fun uploadFile(file: MultipartFile, sectionId: Long, viewStatus: FileViewStatus, comment: String): String
-    fun renameFile(fileId: Long, newFileName: String): String
+
+    fun uploadFile(
+        file: MultipartFile,
+        sectionId: Long,
+        userDetailsId: Long,
+        viewStatus: FileViewStatus,
+        comment: String,
+    ): String
+
+    fun renameFile(
+        fileId: Long,
+        newFileName: String,
+    ): String
+
+    fun prepareContent(contentName: String): ResponseEntity<Resource>
 }

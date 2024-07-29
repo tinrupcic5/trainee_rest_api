@@ -12,7 +12,10 @@ internal interface SectionEntityJpaRepository : JpaRepository<SectionEntity, Lon
     """,
         nativeQuery = true,
     )
-    fun getSectionByName(name: String, sectionId: Long): SectionEntity
+    fun getSectionByName(
+        name: String,
+        sectionId: Long,
+    ): SectionEntity
 
     @Query(
         """
@@ -20,7 +23,7 @@ internal interface SectionEntityJpaRepository : JpaRepository<SectionEntity, Lon
     """,
         nativeQuery = true,
     )
-    fun getSectionById(sectionId: Long): SectionEntity
+    fun getSectionById(sectionId: Long): SectionEntity?
 
     @Query(
         """

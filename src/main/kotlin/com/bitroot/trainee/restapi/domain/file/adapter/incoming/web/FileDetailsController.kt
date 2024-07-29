@@ -7,13 +7,13 @@ import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileComment
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileUriResponse
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileViewStatus
 import com.bitroot.trainee.restapi.domain.user.MessageBody
+import org.springframework.core.io.Resource
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -28,15 +28,23 @@ class FileDetailsController(
 //    fun downloadFile(@PathVariable fileName: String) =
 //        fileDetailsService.downloadFile(fileName)
 
-    @PostMapping("/upload/{sectionId}/{viewStatus}")
+    @PostMapping("/upload/{sectionId}/{userDetailsId}/{viewStatus}")
     fun uploadFile(
-        @RequestParam("file") file: MultipartFile,
+        @RequestParam("files") file: MultipartFile,
         @PathVariable sectionId: Long,
+        @PathVariable userDetailsId: Long,
         @PathVariable viewStatus: String,
-        @RequestBody comment: FileComment,
+        @RequestParam("comment") comment: FileComment,
     ): ResponseEntity<MessageBody> =
         ResponseEntity.ok(
-            fileDetailsService.uploadFile(file, sectionId, FileViewStatus.valueOf(viewStatus),comment.value).toMessageBody(),
+            fileDetailsService
+                .uploadFile(
+                    file,
+                    sectionId,
+                    userDetailsId,
+                    FileViewStatus.valueOf(viewStatus),
+                    comment.value,
+                ).toMessageBody(),
         )
 
     @PutMapping("/rename/{fileId}/{newFileName}")
@@ -66,7 +74,17 @@ class FileDetailsController(
     ): ResponseEntity<Set<ResourceDto>> = fileDetailsService.getAllSections(userId)
 
     @GetMapping("/stream/{userId}")
-    fun streamFile(
+    fun getAllFilesAndNotifications(
         @PathVariable userId: Long,
-    ): ResponseEntity<List<FileUriResponse>> = ResponseEntity.ok(fileDetailsService.streamFile(userId))
+    ): ResponseEntity<List<FileUriResponse>> = ResponseEntity.ok(fileDetailsService.streamFileAndGetNotifications(userId))
+
+    @GetMapping("/content/{contentName}")
+    fun getVideo(
+        @PathVariable contentName: String,
+    ): ResponseEntity<Resource> = fileDetailsService.prepareContent(contentName)
+
+//    @GetMapping("/content/{contentName}", produces = ["video/mp4", "video/quicktime", "image/png", "image/jpeg"])
+//    fun streamVideo(
+//        @PathVariable("contentName") contentName: String,
+//    ): Mono<Resource> = fileDetailsService.prepareContent(contentName)
 }

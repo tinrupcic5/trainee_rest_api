@@ -4,9 +4,21 @@ import com.bitroot.trainee.restapi.domain.file.details.section.common.interfaces
 
 interface SectionRepository {
     fun save(section: Section): String
+
     fun delete(section: Section): String
-    fun getSectionByName(sectionName: String, sectionId: Long): Section
-    fun getSectionById(sectionId: Long): Section
+
+    fun getSectionByName(
+        sectionName: String,
+        sectionId: Long,
+    ): Section
+
+    fun getSectionById(sectionId: Long): Section?
+
     fun getAllSections(userId: Long): Set<Section>
-    fun renameSection(sectionId: Long, oldSectionName: String, newSectionName: String): String
+
+    fun renameSection(
+        sectionId: Long,
+        oldSectionName: String,
+        newSectionName: String,
+    ): String
 }

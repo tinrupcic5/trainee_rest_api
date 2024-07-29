@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/version")
-class VersionController {
+@RequestMapping("/api/properties")
+class ApplicationPropsController {
     @Value("\${info.version}")
     private val version = ""
 
@@ -19,13 +19,12 @@ class VersionController {
     @Value("\${info.time}")
     private val time = ""
 
-    private val textVersion = """
-        version: $version
-        deployed: $deployed
-        time: $time
-    """.trimIndent()
+    @Value("\${info.name}")
+    private val name = ""
 
-    @GetMapping
-    fun getVersion(): ResponseEntity<String> =
-        ResponseEntity.status(HttpStatus.OK).body(textVersion)
+    @GetMapping("/version")
+    fun getVersion(): ResponseEntity<String> = ResponseEntity.status(HttpStatus.OK).body("version:$version")
+
+    @GetMapping("/name")
+    fun getName(): ResponseEntity<String> = ResponseEntity.status(HttpStatus.OK).body(name)
 }

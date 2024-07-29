@@ -7,8 +7,10 @@ import com.bitroot.trainee.restapi.domain.file.adapter.outgoing.jpa.FileDetailsR
 import com.bitroot.trainee.restapi.domain.file.adapter.outgoing.web.ResourceDto
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileComment
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetails
+import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsClassPath
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsId
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsName
+import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsNameSuffix
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetailsType
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileUriResponse
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileViewStatus
@@ -18,13 +20,17 @@ import com.bitroot.trainee.restapi.domain.file.properties.FileProperties
 import com.bitroot.trainee.restapi.domain.notification.adapter.outgoing.jpa.NotificationRepository
 import com.bitroot.trainee.restapi.domain.user.details.adapter.outgoing.jpa.UserDetailsRepository
 import mu.KotlinLogging
-import org.apache.coyote.http11.Constants.a
+import org.apache.commons.lang3.StringUtils.substringAfterLast
 import org.springframework.core.io.Resource
+import org.springframework.core.io.ResourceLoader
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 @Validated
@@ -34,6 +40,7 @@ class FileDetailsServiceImpl(
     val userDetailsRepository: UserDetailsRepository,
     val fileProperties: FileProperties,
     val sectionRepository: SectionRepository,
+    val resourceLoader: ResourceLoader,
 ) : FileDetailsService {
     private val logger = KotlinLogging.logger { }
 
@@ -43,7 +50,9 @@ class FileDetailsServiceImpl(
             FileDetails(
                 id = FileDetailsId(fileDetailsRequest.id?.value),
                 name = FileDetailsName(fileDetailsRequest.name),
-                section = sectionResult,
+                section = sectionResult!!,
+                classPath = FileDetailsClassPath(fileDetailsRequest.classPath.value),
+                suffix = FileDetailsNameSuffix(fileDetailsRequest.suffix.value),
                 fileViewStatus = fileDetailsRequest.fileViewStatus,
                 createdAt = fileDetailsRequest.createdAt,
                 fileType = FileDetailsType(fileDetailsRequest.fileType),
@@ -71,7 +80,7 @@ class FileDetailsServiceImpl(
         )
     }
 
-    override fun streamFile(userId: Long): List<FileUriResponse> {
+    override fun streamFileAndGetNotifications(userId: Long): List<FileUriResponse> {
         val sections = sectionRepository.getAllSections(userId)
         val userDetails = userDetailsRepository.getUserDetailsByUserId(userId)
         val notification = notificationRepository.getNotificationForSchoolDetailsId(userDetails.schoolDetails.id?.value!!)
@@ -88,8 +97,8 @@ class FileDetailsServiceImpl(
                 FileUriResponse(
                     type = AppSettings.NOTIFICATION,
                     notificationMessage = it.message.value,
-                    createdAt = it.createdAt
-                )
+                    createdAt = it.createdAt,
+                ),
             )
         }
 
@@ -112,30 +121,41 @@ class FileDetailsServiceImpl(
     override fun uploadFile(
         file: MultipartFile,
         sectionId: Long,
+        userDetailsId: Long,
         viewStatus: FileViewStatus,
         comment: String,
     ): String {
-        val sectionResult = sectionRepository.getSectionById(sectionId)
+        val sectionResult = sectionRepository.getSectionById(sectionId) ?: return "Section not found"
 
-        if (!save(
-                FileDetailsRequest(
-                    id = null,
-                    name = file.originalFilename?.substringBeforeLast('.')!!,
-                    section = sectionResult.toRequest(),
-                    fileViewStatus = viewStatus,
-                    createdAt = LocalDateTime.now(),
-                    fileType = if (isVideo(file)) AppSettings.VIDEO else AppSettings.IMAGE,
-                    comment = comment,
-                ),
-            ).contains("saved")
-        ) {
-            return "File not saved"
-        }
-        return fileProperties.uploadFile(
-            sectionResult.userDetails.schoolDetails.school.schoolName.value,
-            sectionResult.name.value,
-            file,
+        val newFileName = createCustomUUID(LocalDateTime.now().toString())
+
+        val uploadFile =
+            fileProperties.uploadFile(
+                sectionResult.userDetails.schoolDetails.school.schoolName.value,
+                sectionResult.name.value,
+                file,
+                newFileName,
+            )
+        return save(
+            FileDetailsRequest(
+                id = null,
+                name = newFileName,
+                section = sectionResult.toRequest(),
+                classPath = FileDetailsClassPath(uploadFile),
+                suffix = FileDetailsNameSuffix("." + file.originalFilename.toString().substringAfterLast('.')),
+                fileViewStatus = viewStatus,
+                createdAt = LocalDateTime.now(),
+                fileType = if (isVideo(file)) AppSettings.VIDEO else AppSettings.IMAGE,
+                comment = comment,
+            ),
         )
+    }
+
+    fun createCustomUUID(createdAt: String): String {
+        val uuid = UUID.randomUUID().toString().substring(0, 14)
+        val uuid2 = UUID.randomUUID().toString().substring(0, 5)
+        val dates = createdAt.substring(createdAt.length - 5)
+        return "$uuid$dates$uuid2"
     }
 
     override fun renameFile(
@@ -151,5 +171,39 @@ class FileDetailsServiceImpl(
             file.name.value,
             newFileName,
         )
+    }
+
+//    override fun prepareContent(title: String): Mono<Resource> {
+//        val fileDetails = fileDetailsRepository.getFileDetailsByName(title.substringBeforeLast("."))
+//        val resourcePath = "classpath:${fileDetails.classPath.value}"
+//        println("Loading resource from path: $resourcePath")
+//        return Mono.fromSupplier {
+//            resourceLoader.getResource(resourcePath)
+//        }
+//    }
+
+    override fun prepareContent(contentName: String): ResponseEntity<Resource> {
+        val fileDetails = fileDetailsRepository.getFileDetailsByName(contentName.substringBeforeLast("."))
+
+        val resourcePath = "classpath:${fileDetails.classPath.value}"
+        val resource: Resource = resourceLoader.getResource(resourcePath)
+
+        val contentType =
+            when {
+                contentName.endsWith(".mp4") -> "video/mp4"
+                contentName.endsWith(".mov") -> "video/quicktime"
+                contentName.endsWith(".png") -> "image/png"
+                contentName.endsWith(".jpg") || contentName.endsWith(".jpeg") -> "image/jpeg"
+                else -> "application/octet-stream"
+            }
+
+        return if (resource.exists() || resource.isReadable) {
+            ResponseEntity
+                .ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(resource)
+        } else {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).build<Resource>()
+        }
     }
 }
