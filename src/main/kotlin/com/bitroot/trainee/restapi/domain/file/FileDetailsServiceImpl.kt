@@ -19,6 +19,7 @@ import com.bitroot.trainee.restapi.domain.file.details.section.common.interfaces
 import com.bitroot.trainee.restapi.domain.file.properties.FileProperties
 import com.bitroot.trainee.restapi.domain.notification.adapter.outgoing.jpa.NotificationRepository
 import com.bitroot.trainee.restapi.domain.user.details.adapter.outgoing.jpa.UserDetailsRepository
+import com.google.api.ResourceProto.resource
 import mu.KotlinLogging
 import org.apache.commons.lang3.StringUtils.substringAfterLast
 import org.springframework.core.io.Resource
@@ -187,7 +188,7 @@ class FileDetailsServiceImpl(
 
         val resourcePath = "classpath:${fileDetails.classPath.value}"
         val resource: Resource = resourceLoader.getResource(resourcePath)
-
+        logger.info("resourcePath $resourcePath")
         val contentType =
             when {
                 contentName.endsWith(".mp4") -> "video/mp4"
@@ -203,6 +204,7 @@ class FileDetailsServiceImpl(
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource)
         } else {
+            logger.info("HttpStatus.NOT_FOUND")
             ResponseEntity.status(HttpStatus.NOT_FOUND).build<Resource>()
         }
     }

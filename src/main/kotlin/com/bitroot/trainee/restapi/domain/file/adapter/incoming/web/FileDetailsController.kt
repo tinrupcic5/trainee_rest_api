@@ -79,7 +79,7 @@ class FileDetailsController(
     ): ResponseEntity<List<FileUriResponse>> = ResponseEntity.ok(fileDetailsService.streamFileAndGetNotifications(userId))
 
     @GetMapping("/content/{contentName}")
-    fun getVideo(
+    fun getContent(
         @PathVariable contentName: String,
     ): ResponseEntity<Resource> = fileDetailsService.prepareContent(contentName)
 

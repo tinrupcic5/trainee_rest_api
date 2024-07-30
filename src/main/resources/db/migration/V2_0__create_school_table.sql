@@ -12,4 +12,3 @@ CREATE TABLE school_details
     school_country  TEXT NOT NULL
 );
 
-
