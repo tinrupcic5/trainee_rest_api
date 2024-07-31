@@ -67,8 +67,13 @@ class ProfileImageServiceImpl(
         return profileImageRepository.delete(profileImage)
     }
 
-    override fun getProfileImageBySchoolId(schoolId: Long): ProfileImageDto =
-        profileImageRepository.getProfileImageBySchoolId(schoolId).toDto()
+    override fun getProfileImageBySchoolId(schoolId: Long): ProfileImageDto {
+      val file =   profileImageRepository.getProfileImageBySchoolId(schoolId).toDto()
+
+        val uri = fileProperties.getProfileImage(file.name,file.school.schoolName)
+
+        return  file.copy(uri = uri)
+    }
 
 
     override fun prepareContent(contentName: String): ResponseEntity<Resource> {

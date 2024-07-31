@@ -7,6 +7,7 @@ import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileDetails
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.FileUriResponse
 import com.bitroot.trainee.restapi.domain.file.common.interfaces.toDto
 import com.bitroot.trainee.restapi.domain.file.details.section.common.interfaces.toDto
+import com.bitroot.trainee.restapi.security.passwordkey.localTimeToString
 import mu.KotlinLogging
 import org.apache.commons.lang3.StringUtils.substringAfterLast
 import org.springframework.beans.factory.annotation.Value
@@ -114,7 +115,7 @@ class FileProperties(
         }
 
         val baseFilePath =
-            "$filePath$filePathToProfileImage${File.separator}$schoolName${File.separator}".replace(" ", "")
+            "$filePath$filePathToProfileImage$schoolName${File.separator}".replace(" ", "")
 
         val uploadDirectory: Path = Paths.get(baseFilePath)
         createFolderIfNotExists(baseFilePath)
@@ -257,8 +258,9 @@ class FileProperties(
         val directory = Paths.get(baseFilePath).toFile()
 
         val foundFile = directory.listFiles()?.find { it.name.startsWith(fileName) }
+        val uri = "http://192.168.1.114:8888/api/image/content/${extractFilename(foundFile.toString())}"
 
-        return foundFile.toString()
+        return uri
     }
 
     fun streamFile(fileDetailsList: List<FileDetails>): List<FileUriResponse> {
