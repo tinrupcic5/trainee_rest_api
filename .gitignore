@@ -20,6 +20,16 @@ release.properties
 *.iws
 *.ipr
 
+# Ignore Docker Compose
+docker-compose.override.yml
+
+
+# Ignore the Docker Compose project configuration directory
+.docker/
+
+# Ignore build artifacts
+build/
+
 # Ignore Eclipse files
 *.classpath
 *.project
@@ -38,6 +48,7 @@ nbdist/
 
 # Ignore logs
 *.log
+docker-compose.logs/
 
 # Ignore OS-specific files
 .DS_Store
